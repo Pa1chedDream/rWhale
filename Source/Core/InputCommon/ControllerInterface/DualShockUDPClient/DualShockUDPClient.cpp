@@ -543,6 +543,20 @@ Device::Device(std::string name, int index, std::string server_address, u16 serv
   AddInput(new Button<u8>("PS", m_pad_data.button_ps, 0x1));
   AddInput(new Button<u8>("Touch Button", m_pad_data.button_touch, 0x1));
 
+  // Provide Wii Remote-style names in addition to the existing DualShock-style names so the same
+  // DSU source can be mapped directly for Wii Remote emulation.
+  AddInput(new AnalogInput<u8>("A", m_pad_data.button_cross_analog, 255));
+  AddInput(new AnalogInput<u8>("B", m_pad_data.button_circle_analog, 255));
+  AddInput(new AnalogInput<u8>("1", m_pad_data.button_square_analog, 255));
+  AddInput(new AnalogInput<u8>("2", m_pad_data.button_triangle_analog, 255));
+  AddInput(new AnalogInput<u8>("Up", m_pad_data.button_dpad_up_analog, 255));
+  AddInput(new AnalogInput<u8>("Down", m_pad_data.button_dpad_down_analog, 255));
+  AddInput(new AnalogInput<u8>("Left", m_pad_data.button_dpad_left_analog, 255));
+  AddInput(new AnalogInput<u8>("Right", m_pad_data.button_dpad_right_analog, 255));
+  AddInput(new Button<u8>("-", m_pad_data.button_states1, 0x1));
+  AddInput(new Button<u8>("+", m_pad_data.button_states1, 0x8));
+  AddInput(new Button<u8>("Home", m_pad_data.button_ps, 0x1));
+
   AddInput(new AnalogInput<u8>("Left X-", m_pad_data.left_stick_x, -128, -128));
   AddInput(new AnalogInput<u8>("Left X+", m_pad_data.left_stick_x, 127, -128));
   AddInput(new AnalogInput<u8>("Left Y-", m_pad_data.left_stick_y_inverted, -128, -128));
