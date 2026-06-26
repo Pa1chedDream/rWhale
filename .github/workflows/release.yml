@@ -9,11 +9,11 @@ jobs:
   build:
     # runs-on: macos-12
     runs-on: [self-hosted, macOS]
-    
+
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
 
       # - name: Set Xcode Version
       #   run: sudo xcode-select -s /Applications/Xcode_14.2.app
@@ -22,7 +22,17 @@ jobs:
       #   run: |
       #     brew install cmake ninja bartycrouch dpkg
       #     /usr/bin/python3 -m pip install polib
-      
+
+      - name: Install bartycrouch
+        shell: bash
+        run: |
+          if ! command -v bartycrouch >/dev/null 2>&1; then
+            gem install bartycrouch --no-document --user-install
+            echo "$(ruby -e 'require "rubygems"; puts Gem.user_dir')/bin" >> "$GITHUB_PATH"
+          fi
+          hash -r
+          bartycrouch --version
+
       # - name: Import Signing Certificate
       #   run: |
       #     echo ${{ secrets.DIOS_SIGNING_CERTIFICATE }} | base64 -d > "SigningCertificate.p12"
@@ -36,7 +46,7 @@ jobs:
       - name: Write GoogleServices-Info.plist
         run: |
           echo ${{ secrets.DIOS_GOOGLE_PLIST }} | base64 -d > "Source/iOS/App/Project/Assets/GoogleService-Info.plist"
-      
+
       - name: Set Schema for Normal
         if: "!github.event.release.prerelease"
         run: |
@@ -44,7 +54,7 @@ jobs:
           echo "XCODE_CONFIGURATION_JB=Release (Jailbroken)" >> $GITHUB_ENV
           echo "XCODE_CONFIGURATION_TS=Release (TrollStore)" >> $GITHUB_ENV
           echo "DEB_CONTROL_NAME=control-normal" >> $GITHUB_ENV
-      
+
       - name: Set Schema for Beta
         if: "github.event.release.prerelease"
         run: |
@@ -62,18 +72,18 @@ jobs:
           xcodebuild archive -archivePath "${{ github.workspace }}/archives/NonJailbroken.xcarchive" -configuration "${{ env.XCODE_CONFIGURATION_NJB }}" -scheme "DiOS (NJB)" ${{ env.XCODE_COMMON_BUILD_ARGS }}
           xcodebuild archive -archivePath "${{ github.workspace }}/archives/Jailbroken.xcarchive" -configuration "${{ env.XCODE_CONFIGURATION_JB }}" -scheme "DiOS (JB)" ${{ env.XCODE_COMMON_BUILD_ARGS }}
           xcodebuild archive -archivePath "${{ github.workspace }}/archives/TrollStore.xcarchive" -configuration "${{ env.XCODE_CONFIGURATION_TS }}" -scheme "DiOS (JB)" ${{ env.XCODE_COMMON_BUILD_ARGS }}
-      
+
       - name: Build IPA Files
         run: |
           mkdir "${{ github.workspace }}/products"
           "${{ github.workspace }}/Source/iOS/App/Project/Scripts/CreateIpa.sh" "${{ github.workspace }}/archives/NonJailbroken.xcarchive/Products/Applications/DolphiniOS.app" "OatmealDome Software" "${{ github.workspace }}/Source/iOS/App/Project/Entitlements/Public.entitlements" "${{ github.workspace }}/products/Non-Jailbroken.ipa"
           "${{ github.workspace }}/Source/iOS/App/Project/Scripts/CreateIpa.sh" "${{ github.workspace }}/archives/TrollStore.xcarchive/Products/Applications/DolphiniOS.app" "OatmealDome Software" "${{ github.workspace }}/Source/iOS/App/Project/Entitlements/Private.entitlements" "${{ github.workspace }}/products/TrollStore.tipa"
-      
+
       - name: Build DEB File
         run: |
           "${{ github.workspace }}/Source/iOS/App/Project/Scripts/CreateDeb.sh" "${{ github.workspace }}/archives/Jailbroken.xcarchive/Products/Applications/DolphiniOS.app" "OatmealDome Software" "${{ github.workspace }}/Source/iOS/App/Project/Entitlements/Private.entitlements" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/${{ env.DEB_CONTROL_NAME }}.in" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/postinst.sh" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/postrm.sh" "Applications" "${{ github.workspace }}/products/Jailbroken-Rootful.deb"
           "${{ github.workspace }}/Source/iOS/App/Project/Scripts/CreateDeb.sh" "${{ github.workspace }}/archives/Jailbroken.xcarchive/Products/Applications/DolphiniOS.app" "OatmealDome Software" "${{ github.workspace }}/Source/iOS/App/Project/Entitlements/Private.entitlements" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/${{ env.DEB_CONTROL_NAME }}-rootless.in" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/postinst.sh" "${{ github.workspace }}/Source/iOS/App/Project/Package/Deb/postrm.sh" "var/jb/Applications" "${{ github.workspace }}/products/Jailbroken-Rootless.deb"
-      
+
       - uses: softprops/action-gh-release@v1
         with:
           files: |

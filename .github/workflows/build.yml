@@ -32,6 +32,16 @@ jobs:
       #     brew install cmake ninja bartycrouch
       #     /usr/bin/python3 -m pip install polib
 
+      - name: Install bartycrouch
+        shell: bash
+        run: |
+          if ! command -v bartycrouch >/dev/null 2>&1; then
+            gem install bartycrouch --no-document --user-install
+            echo "$(ruby -e 'require "rubygems"; puts Gem.user_dir')/bin" >> "$GITHUB_PATH"
+          fi
+          hash -r
+          bartycrouch --version
+
       - name: Set Schema
         run: |
           echo "XCODE_CONFIGURATION_NJB=Release (Non-Jailbroken)" >> $GITHUB_ENV
